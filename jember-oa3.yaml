@@ -1,0 +1,568 @@
+openapi: 3.1.0
+info:
+  version: 0.0.1
+  title: jember.ai API
+  termsOfService: https://jember.ai/terms/
+  contact:
+    name: Contact our support
+    email: info@jember.ai
+    url: http://jember.ai/contact
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  x-logo:
+    url: https://cdn.vectorstock.com/i/500p/34/32/ai-artificial-intelligence-cyber-background-vector-35153432.jpg
+    altText: jember.ai logo
+  description: |
+    The jember.ai API is a RESTful API which is based upon the [CloudEvents](https://cloudevents.io/) specification. The CloudEvent  specification provides a common way of describing event data.  
+servers:
+  - url: https://api-dev.jember.ai
+    description: Development server
+  - url: https://api.jember.ai/v1
+    description: Production server
+tags:
+  - name: Authorization
+    description: |
+      ## jember.ai Authorization API
+      The jember.ai APIs use OAuth2 for authorization. The OAuth2 protocol is a standard protocol that allows external applications to request access to resources. 
+      The OAuth2 flow used by jember.ai is the client credentials flow. This flow is used when the application is acting on its  own behalf. To obtain an access token, the client sends a POST request to the token endpoint with the client ID and client secret in the Authorization header. The client ID and client secret are base64 encoded.
+      The authorization server will return a JWT token in the response body. The token will contain the following fields:
+        * access_token: The JWT token
+        * token_type: The type of token
+        * expires_in: The time in seconds until the token expires
+        * scope: The scope of the token
+
+      To use the JWT token, the client must include the token in the Authorization header of the request. The token should be prefixed with the token type. For example, `Bearer <token>`.
+  - name: Data Intake
+    description: |
+      ## What are CloudEvents?
+      CloudEvents is a specification for describing event data in a common way. CloudEvents seeks to dramatically simplify  event declaration and delivery across services, platforms, and beyond!
+      The CloudEvents working group has received a large amount of industry interest, ranging from major cloud providers to  popular SaaS companies. The specification is now under the Cloud Native Computing Foundation.
+      Through the use of CloudEvents, the Data Intake API can accept events from a variety of sources. The API  will accept a CloudEvent payload in either JSON or binary format. The CloudEvent payload must contain the following attributes:
+
+        * specversion: The version of the CloudEvents specification which the event uses.
+        * type: Describes the type of event related to the originating occurrence.
+        * source: Identifies the context in which an event happened.
+        * id: Identifies the event.
+        * time: Timestamp of when the occurrence happened.
+        * datacontenttype: Content type of the data value. This is a MIME type.
+        * data: The event payload.
+
+      The CloudEvent payload can be text, JSON, XML, CSV, PDF, or any other format. The payload can also be  binary data supporting files such as images and audio.
+      ### Example JSON Payload
+      Below is an example of a CloudEvent JSON payload. In this example you can see the CloudEvent standard attributes,  as well as some custom attributes that are specific to the `com.example.someevent` event type. The data element can be any JSON object.
+
+        ```json
+        {
+          "specversion" : "1.0", 
+          "type" : "com.example.someevent",
+          "source" : "/mycontext",
+          "subject": null,
+          "id" : "C234-1234-1234",
+          "time" : "2018-04-05T17:31:00Z",
+          "comexampleextension1" : "value",
+          "comexampleothervalue" : 5,
+          "datacontenttype" : "application/json",
+          "data" : {
+              "appinfoA" : "abc",
+              "appinfoB" : 123,
+              "appinfoC" : true
+          }
+        }
+        ```
+      ### Example Payload Specifying the CloudEvent Attributes in Header Values
+
+         ```
+          ce-specversion: 1.0
+          ce-type: com.example.someevent
+          ce-source: /mycontext
+          ce-id: C234-1234-1234
+          ce-time: 2018-04-05T17:31:00Z
+          ce-comexampleextension1: value
+          ce-comexampleothervalue: 5
+          content-type: application/json
+
+          {
+            "appinfoA" : "abc",
+            "appinfoB" : 123,
+            "appinfoC" : true
+          }
+         ```
+      ### Example with Binary Payload
+         ```json
+         {
+          "specversion" : "1.0",
+          "type" : "com.example.someevent",
+          "source" : "/mycontext",
+          "id" : "A234-1234-1234",
+          "time" : "2018-04-05T17:31:00Z",
+          "comexampleextension1" : "value",
+          "comexampleothervalue" : 5,
+          "datacontenttype" : "application/vnd.apache.thrift.binary",
+          "data_base64" : "... base64 encoded string ..."
+          } 
+        ```
+  - name: Data Query
+    description: Query documents in the Data Intake vector store.
+paths:
+  /v1/oauth2/token:
+    post:
+      tags:
+        - Authorization
+      summary: Get JWT Token
+      description: Using client credentials to get a JWT token
+      operationId: postForJWT
+      parameters:
+        - in: header
+          name: Authorization
+          description: Base64 Encoded Client ID and Client Secret `Basic base64(client_id:client_secret)`
+          schema:
+            type: string
+      security:
+        - BasicAuth: []
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                    - client_credentials
+                scope:
+                  type: string
+                  example: read write
+        description: User profile to be added to the database.
+        required: true
+      responses:
+        '200':
+          description: Successfully Authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                  scope:
+                    type: string
+        '405':
+          description: Invalid input
+  /v1/dataintake:
+    get:
+      tags:
+        - Data Intake
+      summary: List Cloud Events by status
+      description: |-
+        This operation lets you list users by their status. Multiple status values can be provided in a single request by using comma-separated strings. Only administrators can use this operation.
+         
+        **This is an example of a deprecated operation.**
+      operationId: listCloudEvents
+      responses:
+        '200':
+          description: List of Cloud Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CloudEvent'
+        '400':
+          description: Invalid status value was provided in the request
+      security:
+        - BearerAuth: []
+    post:
+      tags:
+        - Data Intake
+      summary: Create a Cloud Event
+      description: This Operation Creates a new Cloud Event
+      operationId: createCloudEvent
+      parameters:
+        - in: header
+          name: ce-specversion
+          description: Required if request body is application/json
+          schema:
+            type: string
+            enum:
+              - '1.0'
+              - 1.0.1
+              - 1.0.2
+        - in: header
+          name: ce-id
+          description: Required if request body is application/json
+          schema:
+            type: string
+        - in: header
+          name: ce-type
+          description: Required if request body is application/json
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+          application/json:
+            schema:
+              type: object
+        description: User profile to be added to the database.
+        required: true
+      responses:
+        '200':
+          description: Successfully created a event
+        '405':
+          description: Invalid input
+  /v1/dataintake/{event_id}:
+    get:
+      tags:
+        - Data Intake
+      summary: Get Cloud Event by id
+      description: |-
+        This operation lets you list users by their status. Multiple status values can be provided in a single request by using comma-separated strings. Only administrators can use this operation.
+         
+        **This is an example of a deprecated operation.**
+      operationId: getCloudEvent
+      parameters:
+        - name: event_id
+          in: path
+          description: ID of the event to return
+          required: true
+          schema:
+            type: string
+          example: 123
+      responses:
+        '200':
+          description: Cloud Event
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CloudEvent'
+        '400':
+          description: Invalid status value was provided in the request
+      security:
+        - BearerAuth: []
+    put:
+      tags:
+        - Data Intake
+      summary: Create a Cloud Event
+      description: This Operation Creates a new Cloud Event
+      operationId: updateCloudEvent
+      parameters:
+        - name: event_id
+          in: path
+          description: ID of the event to return
+          required: true
+          schema:
+            type: string
+          example: 123
+      responses:
+        '200':
+          description: Successfully created a event
+        '405':
+          description: Invalid input
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+        description: User profile to be added to the database.
+        required: true
+  /v1/query:
+    post:
+      tags:
+        - Data Query
+      summary: Query documents
+      description: |
+        Query documents in the data intake vector store. Provide the query string, and specify the number of documents 
+        to return in the search response. The top-K most similar documents to the query will be returned. 
+        The value of K must be greater than 0. Optionally, provide a similarity threshold score to filter the search 
+        response by. Only documents with similarity score equal or greater than the 'threshold' will be returned. 
+        Note that this is a post-processing step performed on the client not the server side. A threshold value 
+        of 0.0 means any similarity is accepted or disable the similarity threshold filtering. A threshold value 
+        of 1.0 means an exact match is required.
+      operationId: postQueryVectorStore
+      parameters:
+        - in: query
+          name: clientId
+          required: false
+          description: Optional client ID to filter documents by. Defaults to client ID of the authenticated user.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+      responses:
+        '200':
+          description: List of Documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Documents'
+        '400':
+          description: Invalid status value was provided in the request
+      security:
+        - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    BasicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    iddef:
+      type: string
+      minLength: 1
+    sourcedef:
+      type: string
+      format: uri-reference
+      minLength: 1
+    specversiondef:
+      type: string
+      minLength: 1
+      enum:
+        - '1.0'
+        - 1.0.1
+        - 1.0.2
+    typedef:
+      type: string
+      minLength: 1
+    datacontenttypedef:
+      type:
+        - string
+        - 'null'
+      minLength: 1
+    dataschemadef:
+      type:
+        - string
+        - 'null'
+      format: uri
+      minLength: 1
+    subjectdef:
+      type:
+        - string
+        - 'null'
+      minLength: 1
+    timedef:
+      type:
+        - string
+        - 'null'
+      format: date-time
+      minLength: 1
+    datadef:
+      type:
+        - object
+        - string
+        - number
+        - array
+        - boolean
+        - 'null'
+    data_base64def:
+      type:
+        - string
+        - 'null'
+      contentEncoding: base64
+    CloudEvent:
+      description: |
+        CloudEvents Specification JSON Schema. The required attributes are `id`, `source`, `specversion`, and `type`.  The `data` attribute is optional. The `datacontenttype` attribute is required if the `data` attribute is present.  Additional properties may be included in the event.
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          description: Identifies the event.
+          $ref: '#/components/schemas/iddef'
+          example: A234-1234-1234
+        source:
+          description: Identifies the context in which an event happened.
+          $ref: '#/components/schemas/sourcedef'
+          example: https://github.com/cloudevents
+        specversion:
+          description: The version of the CloudEvents specification which the event uses.
+          $ref: '#/components/schemas/specversiondef'
+          example: '1.0'
+        type:
+          description: Describes the type of event related to the originating occurrence.
+          $ref: '#/components/schemas/typedef'
+          example: com.github.pull_request.opened
+        datacontenttype:
+          description: |
+            Content type of the data value. Must adhere to [RFC 2046](https://www.iana.org/assignments/media-types/media-types.xhtml) format. Some common content types are: 
+              * text/xml 
+              * application/json 
+              * application/pdf
+              * text/plain
+              * text/csv
+              * application/msword
+              * text/html
+              * image/jpeg
+              * image/png
+              * image/gif
+              * application/octet-stream
+              * application/x-www-form-urlencoded
+          $ref: '#/components/schemas/datacontenttypedef'
+          example: text/xml
+        dataschema:
+          description: Identifies the schema that data adheres to.
+          $ref: '#/components/schemas/dataschemadef'
+        subject:
+          description: Describes the subject of the event in the context of the event producer (identified by source).
+          $ref: '#/components/schemas/subjectdef'
+          example: mynewfile.jpg
+        time:
+          description: Timestamp of when the occurrence happened. Must adhere to RFC 3339. Example - `2018-04-05T17:31:00Z`
+          $ref: '#/components/schemas/timedef'
+          example: '2018-04-05T17:31:00Z'
+        data:
+          description: The event payload.
+          $ref: '#/components/schemas/datadef'
+          example: <much wow="xml"/>
+        data_base64:
+          description: Base64 encoded event payload. Must adhere to RFC4648.
+          $ref: '#/components/schemas/data_base64def'
+          example: Zm9vYg==
+      required:
+        - id
+        - source
+        - specversion
+        - type
+      definitions:
+        iddef:
+          type: string
+          minLength: 1
+        sourcedef:
+          type: string
+          format: uri-reference
+          minLength: 1
+        specversiondef:
+          type: string
+          minLength: 1
+          enum:
+            - '1.0'
+            - 1.0.1
+            - 1.0.2
+        typedef:
+          type: string
+          minLength: 1
+        datacontenttypedef:
+          type:
+            - string
+            - 'null'
+          minLength: 1
+        dataschemadef:
+          type:
+            - string
+            - 'null'
+          format: uri
+          minLength: 1
+        subjectdef:
+          type:
+            - string
+            - 'null'
+          minLength: 1
+        timedef:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          minLength: 1
+        datadef:
+          type:
+            - object
+            - string
+            - number
+            - array
+            - boolean
+            - 'null'
+        data_base64def:
+          type:
+            - string
+            - 'null'
+          contentEncoding: base64
+    Query:
+      type: object
+      properties:
+        query:
+          type: string
+        topK:
+          type: integer
+          minimum: 1
+          default: 4
+          description: |
+            Number of documents to return in the search response. The top-K most similar documents 
+            to the query will be returned. The value of K must be greater than 0.
+        similarityThreshold:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0
+          description: |
+            Similarity threshold score to filter the search response by. Only documents with similarity 
+            score equal or greater than the 'threshold' will be returned. Note that this is a post-processing 
+            step performed on the client not the server side. A threshold value of 0.0 means any similarity 
+            is accepted or disable the similarity threshold filtering. A threshold value of 1.0 means an exact 
+            match is required.
+    Document:
+      description: Document found in vector store based on query.
+      type: object
+      properties:
+        id:
+          description: Unique identifier for the document.
+          example: 123e4567-e89b-12d3-a456-426614174000
+        embedding:
+          type: array
+        content:
+          description: |
+            This is the content of the document. It can be any text that was found in the vector store. The 
+            original source is a document that was uploaded. The metadata of the document can be found in the
+            metadata field. This will contain the source document id, the distance from the query, and the source
+            of the document.
+          type: string
+          example: |
+            This is the content of the document. It can be any text that was found in the vector store. The 
+            original source is a document that was uploaded. The metadata of the document can be found in the
+            metadata field. This will contain the source document id, the distance from the query, and the source
+            of the document.
+        media:
+          type: array
+        metadata:
+          description: Metadata of the document.
+          type: object
+          properties:
+            distance:
+              description: Distance of the document from the query.
+              type: number
+              format: double
+              example: 0.48595285
+            source:
+              description: Source of the document.
+              type: string
+              example: Byte array resource [a5ecf6de-5b29-4eee-8832-61ce4e18abd6.csv]
+    Documents:
+      description: List of Documents
+      type: array
+      items:
+        $ref: '#/components/schemas/Document'
+x-tagGroups:
+  - name: jember.ai
+    tags:
+      - Authorization
+      - Data Intake
+      - Data Query
