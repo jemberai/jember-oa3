@@ -42,7 +42,7 @@ properties:
         type: string
         description: Source of the document.
         example: Byte array resource [a5ecf6de-5b29-4eee-8832-61ce4e18abd6.csv]
-      parentId:
+      parentDocumentId:
         type: string
         description: Parent document ID.
         example: "123e4567-e89b-12d3-a456-426614174000"
