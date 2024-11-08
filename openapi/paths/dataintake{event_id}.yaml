@@ -12,6 +12,7 @@ get:
       schema:
         type: string
       example: 123
+    - $ref: ../components/headers/CorrelationId.yaml
   responses:
     '200':
       description: Cloud Event
@@ -21,6 +22,9 @@ get:
             type: array
             items:
               $ref: ../components/schemas/CloudEvent.yaml
+      headers: 
+        correlationId:
+          $ref: ../components/responses/CorrelationId.yaml
     '400':
       description: Invalid status value was provided in the request
   security:
@@ -38,10 +42,14 @@ put:
     required: true
     schema:
       type: string
-    example: 123
+    example: 123 
+  - $ref: ../components/headers/CorrelationId.yaml
   responses:
     '200':
       description: Successfully created a event
+      headers: 
+        correlationId:
+          $ref: ../components/responses/CorrelationId.yaml
     '405':
       description: Invalid input
   security:

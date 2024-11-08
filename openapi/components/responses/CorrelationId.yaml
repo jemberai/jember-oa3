@@ -1,0 +1,3 @@
+description: The correlation ID of the event. Used for correlation across different systems and auditing.
+schema:
+  type: string

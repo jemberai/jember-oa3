@@ -4,7 +4,8 @@ get:
   summary: List Cloud Events by status
   description: "This operation lets you list users by their status. Multiple status values can be provided in a single request by using comma-separated strings. Only administrators can use this operation.\n \n**This is an example of a deprecated operation.**"
   operationId: listCloudEvents
- # parameters: 
+  parameters: 
+    - $ref: ../components/headers/CorrelationId.yaml
   responses:
     '200':
       description: List of Cloud Events
@@ -14,7 +15,9 @@ get:
             type: array
             items:
               $ref: ../components/schemas/CloudEvent.yaml
-
+      headers: 
+        correlationId:
+          $ref: ../components/responses/CorrelationId.yaml
     '400':
       description: Invalid status value was provided in the request
   security:
@@ -42,6 +45,7 @@ post:
         description: Required if request body is application/json
         schema: 
           type: string
+      - $ref: ../components/headers/CorrelationId.yaml
   security:
     - BearerAuth: []
   requestBody:
@@ -57,5 +61,8 @@ post:
   responses:
     '200':
       description: Successfully created a event
+      headers: 
+        correlationId:
+          $ref: ../components/responses/CorrelationId.yaml
     '405':
       description: Invalid input
