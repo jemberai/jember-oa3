@@ -1,0 +1,7 @@
+in: header
+name: correlationId
+description: |
+  The correlation ID of the event. This is a unique identifier for the event. It is used to correlate events across different systems. And will be used to audit the event through the system.
+required: false
+schema:
+  type: string
