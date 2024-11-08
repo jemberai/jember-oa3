@@ -1,0 +1,7 @@
+# Dir for bundles
+dist
+node_modules
+.DS_Store
+index.html
+jember-oa3.yaml
+.idea
