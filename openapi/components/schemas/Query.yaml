@@ -2,14 +2,13 @@ type: object
 properties:
   query:
     type: string
-  topK:
+  maxResults:
     type: integer
     minimum: 1
-    default: 4
+    default: 3
     description: |
-      Number of documents to return in the search response. The top-K most similar documents
-      to the query will be returned. The value of K must be greater than 0.
-  similarityThreshold:
+      Number of embedding documents to return in the search response. 
+  minScore:
     type: number
     format: float
     minimum: 0
@@ -21,3 +20,8 @@ properties:
       step performed on the client not the server side. A threshold value of 0.0 means any similarity
       is accepted or disable the similarity threshold filtering. A threshold value of 1.0 means an exact
       match is required.
+  repository:
+    type: string
+    description: |
+      The repository to search in. If not specified, the search will be performed in all repositories. Use CRR for the 
+      Compliance Reference Repository.
